@@ -15,7 +15,7 @@ public class UserController {
     @Autowired
     UserMapper userMapper;
     
-    @RequestMapping
+    @RequestMapping(value = "/", method = RequestMethod.GET)
     public String indexPage()
     {
     	return "index page1";
