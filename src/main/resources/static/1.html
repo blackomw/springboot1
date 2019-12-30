@@ -33,13 +33,18 @@
                }
                
                //关闭webSocket连接时，回调该函数
-               websocket.onclose = function () {
-                    console.log("on close");
+               websocket.onclose = function (e) {
+                    console.log("on close:", e.code, e.reason, e.data);
+               }
+
+			   //错误处理
+			   websocket.onerror = function (e) {
+                    console.log("on error:", e.code, e.reason, e.data);
                }
 
                //接收信息
                websocket.onmessage = function (msg) {
-                    console.log(msg.data);
+                    console.log(msg.data, msg.code, msg.reason);
                }
 
             }
