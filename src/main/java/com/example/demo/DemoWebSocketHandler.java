@@ -1,6 +1,8 @@
 package com.example.demo;
 
+import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
@@ -12,10 +14,13 @@ import org.springframework.web.socket.server.HandshakeInterceptor;
 
 public class DemoWebSocketHandler extends TextWebSocketHandler implements HandshakeInterceptor {
 
+	public static final ConcurrentHashMap<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
+
 	@Override
 	public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler,
 			Map<String, Object> attributes) throws Exception {
-		System.out.println("before Handshake " + request);
+		System.out.println("before Handshake " + request.getRemoteAddress());
+		
 		return true;
 	}
 
@@ -28,9 +33,22 @@ public class DemoWebSocketHandler extends TextWebSocketHandler implements Handsh
 	@Override
 	protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
 		String payload = message.getPayload();
+		System.out.println(session.getRemoteAddress());
 //		Map<String, String> map = JSONObject.parseObject(payload, HashMap.class);
 		System.out.println("handleTextMessage:" + session + " recv: " + payload);
 		session.sendMessage(new TextMessage("send: " + payload));
+		sessions.putIfAbsent(session.getId(), session);
+	}
+
+	public static void broadcast() {
+		sessions.forEach((id, session) -> {
+			try {
+				if (session.isOpen())
+					session.sendMessage(new TextMessage("a"));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		});
 	}
 
 }
