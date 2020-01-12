@@ -1,4 +1,4 @@
-package com.example.demo;
+package sbs;
 
 public class UserEntity {
     int id;

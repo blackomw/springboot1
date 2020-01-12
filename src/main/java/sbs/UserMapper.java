@@ -1,4 +1,4 @@
-package com.example.demo;
+package sbs;
 
 
 import org.apache.ibatis.annotations.*;
