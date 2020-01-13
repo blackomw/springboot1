@@ -29,8 +29,9 @@ log:
     function touchHandler(e) {
         // console.log(e + " type:" + e.type);
         // log(e + " type:" + e.type);
+        // drawPlayer(-40);
 
-        drawPlayer(-40);
+        send("1");
     }
 
     ctx.fillStyle = "rgba(0,0,0,1)";
@@ -89,7 +90,7 @@ log:
         //打开webSokcet连接时，回调该函数
         websocket.onopen = function () {
             console.log("on open");
-            send("b");
+            send("0");
         }
 
         //关闭webSocket连接时，回调该函数
@@ -104,11 +105,15 @@ log:
 
         //接收信息
         websocket.onmessage = function (msg) {
-            // console.log(msg.data, msg.code, msg.reason);
+            // console.log(msg.data, msg.data.substr(-2, 1));
             if (playerY >= canvasH - playerH) {
                 return;
             }
-            drawPlayer(playerSpeed);
+            let op = msg.data.substr(-2, 1);
+            if (op == '1')
+                drawPlayer(-40);
+            else
+                drawPlayer(playerSpeed);
         }
 
     }

@@ -9,9 +9,9 @@ import org.springframework.web.socket.server.standard.ServletServerContainerFact
 
 @Configuration
 @EnableWebSocket
-public class DemoWebSocketCfg implements WebSocketConfigurer {
+public class WebSocketCfg implements WebSocketConfigurer {
 
-	static DemoWebSocketHandler handler = new DemoWebSocketHandler();
+	static WSHandler handler = new WSHandler();
 
 	@Override
 	public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {

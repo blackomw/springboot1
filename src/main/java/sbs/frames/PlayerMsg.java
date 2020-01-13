@@ -13,4 +13,9 @@ public class PlayerMsg {
 		this.data = data;
 	}
 
+	@Override
+	public String toString() {
+		return "PlayerMsg [type=" + type + ", session=" + session + ", data=" + data + "]";
+	}
+
 }

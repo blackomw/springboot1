@@ -88,10 +88,6 @@ public class Room {
 	public boolean addPlayer(WebSocketSession session) {
 		if (!session.isOpen())
 			return false;
-		if (players.size() < PLAYERS) {
-			players.add(new FramePlayer(++playerIdxCounter, session));
-			return true;
-		}
 		for (int i = 0, n = players.size(); i < n;) {
 			if (!players.get(i).session.isOpen()) {
 				players.remove(i);

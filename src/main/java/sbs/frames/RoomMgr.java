@@ -6,7 +6,7 @@ import java.util.Iterator;
 import org.springframework.web.socket.WebSocketSession;
 
 public class RoomMgr {
-	public static final RoomMgr Instance = new RoomMgr();
+	static final RoomMgr Instance = new RoomMgr();
 
 	int roomIdCounter; // 房间id计数器
 	HashMap<Integer, Room> rooms = new HashMap<>(); // key:roomId
@@ -22,12 +22,12 @@ public class RoomMgr {
 
 	public void handleMsg(PlayerMsg msg) {
 		int type = msg.type;
-		if (type == 0) {
+		if (type == '0') {
 			autoJoin(msg.session);
 		} else {
 			String playerId = msg.session.getId();
 			Integer roomId = playerRoomIds.get(playerId);
-			Room room = roomId > 0 ? rooms.get(roomId) : null;
+			Room room = roomId != null ? rooms.get(roomId) : null;
 			if (room != null)
 				room.playerAction(msg.session, Byte.parseByte(msg.data));
 		}
@@ -35,7 +35,7 @@ public class RoomMgr {
 
 	public int autoJoin(WebSocketSession session) {
 		Integer roomId = playerRoomIds.get(session.getId());
-		if (roomId > 0)
+		if (roomId != null)
 			return roomId;
 		roomId = joinRoom(session);
 		return roomId > 0 ? roomId : createRoom(session);
@@ -48,20 +48,21 @@ public class RoomMgr {
 	public int createRoom(WebSocketSession session) {
 		String playerId = session.getId();
 		Integer roomId = playerRoomIds.get(playerId);
-		Room room = roomId > 0 ? rooms.get(roomId) : null;
+		Room room = roomId != null ? rooms.get(roomId) : null;
 		if (room != null) {
 			leaveRoom(room, session);
 		}
 		room = new Room(roomId = ++roomIdCounter);
 		room.addPlayer(session);
 		rooms.put(roomId, room);
+		playerRoomIds.put(playerId, roomId);
 		return roomId;
 	}
 
 	public void leaveRoom(WebSocketSession session) {
 		String playerId = session.getId();
 		Integer roomId = playerRoomIds.get(playerId);
-		Room room = roomId > 0 ? rooms.get(roomId) : null;
+		Room room = roomId != null ? rooms.get(roomId) : null;
 		if (room != null) {
 			leaveRoom(room, session);
 		}
@@ -69,6 +70,7 @@ public class RoomMgr {
 
 	private void leaveRoom(Room room, WebSocketSession session) {
 		room.removePlayer(session);
+		playerRoomIds.remove(session.getId());
 		if (room.getPlayerCount() == 0)
 			rooms.remove(room.getId());
 	}
@@ -76,14 +78,16 @@ public class RoomMgr {
 	public int joinRoom(WebSocketSession session) {
 		String playerId = session.getId();
 		Integer roomId = playerRoomIds.get(playerId);
-		Room room = roomId > 0 ? rooms.get(roomId) : null;
+		Room room = roomId != null ? rooms.get(roomId) : null;
 		if (room != null)
 			leaveRoom(room, session);
 
 		for (Iterator<Room> it = rooms.values().iterator(); it.hasNext();) {
 			Room r = it.next();
-			if (r.addPlayer(session))
+			if (r.addPlayer(session)) {
+				playerRoomIds.put(playerId, r.getId());
 				return r.getId();
+			}
 		}
 		return 0;
 	}

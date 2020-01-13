@@ -2,6 +2,8 @@ package sbs.frames;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import sbs.Main;
+
 public class FrameThread extends Thread {
 	public static final FrameThread Instance = new FrameThread();
 	public static final long TICK_TIME = 50;
@@ -25,6 +27,7 @@ public class FrameThread extends Thread {
 			RoomMgr roomMgr = RoomMgr.Instance;
 			while ((msg = msgQueue.poll()) != null) {
 				try {
+					Main.Log.info("{}", msg);
 					roomMgr.handleMsg(msg);
 				} catch (Exception e) {
 					e.printStackTrace();
