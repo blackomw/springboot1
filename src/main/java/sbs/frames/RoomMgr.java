@@ -1,9 +1,13 @@
 package sbs.frames;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
+
+import sbs.Main;
 
 public class RoomMgr {
 	static final RoomMgr Instance = new RoomMgr();
@@ -20,16 +24,23 @@ public class RoomMgr {
 		rooms.forEach((__, room) -> room.tick());
 	}
 
-	public void handleMsg(PlayerMsg msg) {
+	public void handleMsg(PlayerMsg msg) throws IOException {
 		int type = msg.type;
+		WebSocketSession session = msg.session;
 		if (type == '0') {
-			autoJoin(msg.session);
+			int roomId = autoJoin(session);
+			Room room = rooms.get(autoJoin(session));
+			int playerIdx = room != null ? room.getPlayerIdx(session) : -1;
+			if (session.isOpen())
+				session.sendMessage(new TextMessage("r," + roomId + "," + playerIdx));
+			else
+				Main.Log.warn("player session is closed on handle autoJoin");
 		} else {
-			String playerId = msg.session.getId();
+			String playerId = session.getId();
 			Integer roomId = playerRoomIds.get(playerId);
 			Room room = roomId != null ? rooms.get(roomId) : null;
 			if (room != null)
-				room.playerAction(msg.session, Byte.parseByte(msg.data));
+				room.playerAction(session, Byte.parseByte(msg.data));
 		}
 	}
 

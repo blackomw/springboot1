@@ -3,7 +3,15 @@
     <style></style>
 </head>
 <body class="body">
+
 <canvas id="canvas" style="border:solid black 1px;"></canvas>
+<br>
+<div style="display: flex">
+    <div style="width: 100px" align="center">roomId:</div>
+    <div id="roomId"></div>
+    <div style="width: 100px" align="center">playerIdx:</div>
+    <div id="playerIdx"></div>
+</div>
 <br>
 log:
 <pre id="log" style="border: 1px solid #ccc;"></pre>
@@ -13,6 +21,9 @@ log:
     const canvas = document.getElementById("canvas");
     canvas.width = canvasW, canvas.height = canvasH;
     const ctx = canvas.getContext("2d");
+
+    let roomIdDiv = document.getElementById('roomId');
+    let playerIdxDiv = document.getElementById('playerIdx');
 
     // canvas.addEventListener("touchstart", (e) => touchHandler(e), false);
     // canvas.addEventListener("touchend", (e) => touchHandler(e), false);
@@ -75,47 +86,52 @@ log:
         window.requestAnimationFrame(draw);
     }
 
-    let websocket = null;
-
-    connectWebSocket();
-
-    //建立WebSocket连接
-    function connectWebSocket() {
-
-        console.log("start ws...");
-
-        //建立webSocket连接
-        websocket = new WebSocket("ws://127.0.0.1:80/wsdemo");
-
-        //打开webSokcet连接时，回调该函数
-        websocket.onopen = function () {
-            console.log("on open");
-            send("0");
-        }
-
-        //关闭webSocket连接时，回调该函数
-        websocket.onclose = function (e) {
-            console.log("on close:", e.code, e.reason, e.data);
-        }
-
-        //错误处理
-        websocket.onerror = function (e) {
-            console.log("on error:", e.code, e.reason, e.data);
-        }
-
-        //接收信息
-        websocket.onmessage = function (msg) {
-            // console.log(msg.data, msg.data.substr(-2, 1));
+    function handleMsg(msg) {
+        let type = msg.charAt(0);
+        if (type == 'r') { // room data
+            let msgArr = msg.split(',');
+            if (msgArr.length > 1) {
+                let roomId = msgArr[1];
+                let playerIdx = msgArr[2];
+                roomIdDiv.innerText = roomId;
+                playerIdxDiv.innerText = playerIdx;
+            }
+        } else if (type == 'f') { // frame data
+            // TODO 按playerIdx更新显示
+            let op = msg.substr(-2, 1);
             if (playerY >= canvasH - playerH) {
                 return;
             }
-            let op = msg.data.substr(-2, 1);
             if (op == '1')
                 drawPlayer(-40);
             else
                 drawPlayer(playerSpeed);
         }
+    }
 
+    let websocket = null;
+    connectWebSocket();
+
+    function connectWebSocket() { //建立WebSocket连接
+        console.log("start ws...");
+        websocket = new WebSocket("ws://127.0.0.1:80/wsdemo"); //建立webSocket连接
+
+        websocket.onopen = function () { //打开webSokcet连接时，回调该函数
+            console.log("on open");
+            send("0");
+        }
+
+        websocket.onclose = function (e) { //关闭webSocket连接时，回调该函数
+            console.log("on close:", e.code, e.reason, e.data);
+        }
+
+        websocket.onerror = function (e) { //错误处理
+            console.log("on error:", e.code, e.reason, e.data);
+        }
+
+        websocket.onmessage = function (msg) { //接收信息
+            handleMsg(msg.data);
+        }
     }
 
     //发送消息

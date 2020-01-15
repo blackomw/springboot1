@@ -55,7 +55,7 @@ public class Room {
 
 	void sendFrame(Frame f) {
 		StringBuilder sb = new StringBuilder(50);
-		sb.append(f.idx).append(';');
+		sb.append('f').append(f.idx).append(';');
 		int n = players.size();
 		for (int i = 0; i < n; ++i) {
 			sb.append(players.get(i).idx).append(',').append(f.op[i]).append(';');
@@ -117,12 +117,22 @@ public class Room {
 		return players.size();
 	}
 
-	public boolean isValid() {
+	public int getPlayerIdx(WebSocketSession session) {
 		for (int i = 0, n = players.size(); i < n; ++i) {
-			if (!players.get(i).session.isOpen())
-				return false;
+			FramePlayer fp = players.get(i);
+			if (fp.session == session) {
+				return fp.idx;
+			}
 		}
-		return true;
+		return -1;
 	}
+
+//	public boolean isValid() {
+//		for (int i = 0, n = players.size(); i < n; ++i) {
+//			if (!players.get(i).session.isOpen())
+//				return false;
+//		}
+//		return true;
+//	}
 
 }
