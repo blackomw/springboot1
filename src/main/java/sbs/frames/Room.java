@@ -44,6 +44,8 @@ public class Room {
 	}
 
 	public void tick() {
+		if (players.size() < PLAYERS)
+			return;
 		if (cur == null)
 			cur = new Frame(idx);
 		frames.add(cur);
@@ -60,15 +62,10 @@ public class Room {
 		for (int i = 0; i < n; ++i) {
 			sb.append(players.get(i).idx).append(',').append(f.op[i]).append(';');
 		}
-		TextMessage tm = new TextMessage(sb.toString());
-		for (int i = 0; i < n; ++i) {
-			try {
-				WebSocketSession session = players.get(i).session;
-				if (session.isOpen())
-					session.sendMessage(tm);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+		try {
+			broadcast(new TextMessage(sb.toString()));
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -83,6 +80,21 @@ public class Room {
 		}
 		if (playerIdx >= 0)
 			cur.op[playerIdx] = op;
+	}
+
+	public void noticePlayerInfo() throws IOException {
+		StringBuilder sb = new StringBuilder(50);
+		sb.append("r,").append(id).append(",");
+		for (int i = 0, n = players.size(); i < n; ++i) {
+			sb.append(players.get(i).idx).append(",");
+		}
+		for (int i = 0, n = players.size(); i < n; ++i) {
+			FramePlayer fp = players.get(i);
+			WebSocketSession session = fp.session;
+			if (session.isOpen()) {
+				session.sendMessage(new TextMessage(sb.toString() + fp.idx));
+			}
+		}
 	}
 
 	public boolean addPlayer(WebSocketSession session) {
@@ -117,22 +129,22 @@ public class Room {
 		return players.size();
 	}
 
-	public int getPlayerIdx(WebSocketSession session) {
-		for (int i = 0, n = players.size(); i < n; ++i) {
-			FramePlayer fp = players.get(i);
-			if (fp.session == session) {
-				return fp.idx;
-			}
-		}
-		return -1;
-	}
-
-//	public boolean isValid() {
+//	public int getPlayerIdx(WebSocketSession session) {
 //		for (int i = 0, n = players.size(); i < n; ++i) {
-//			if (!players.get(i).session.isOpen())
-//				return false;
+//			FramePlayer fp = players.get(i);
+//			if (fp.session == session) {
+//				return fp.idx;
+//			}
 //		}
-//		return true;
+//		return -1;
 //	}
 
+	public void broadcast(TextMessage msg) throws IOException {
+		for (int i = 0, n = players.size(); i < n; ++i) {
+			WebSocketSession session = players.get(i).session;
+			if (session.isOpen()) {
+				session.sendMessage(msg);
+			}
+		}
+	}
 }

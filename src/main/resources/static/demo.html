@@ -47,8 +47,12 @@ log:
 
     ctx.fillStyle = "rgba(0,0,0,1)";
 
-    const playerW = 20, playerH = 20, playerSpeed = 2;
-    let playerX = 300, playerY = 300;
+    let playerIdx = 0, frameIdx = 0, roomId = 0;
+    let playerIdxes = [];
+    let playerPoses = [];
+    const playerW = 20, playerH = 20, playerSpeed = 2, clickOffset = -40;
+    let playerX = 100, playerY = 300, playerXOffset = 100;
+
     ctx.beginPath();
     ctx.rect(playerX, playerY, playerW, playerH);
     ctx.fill();
@@ -90,22 +94,37 @@ log:
         let type = msg.charAt(0);
         if (type == 'r') { // room data
             let msgArr = msg.split(',');
-            if (msgArr.length > 1) {
-                let roomId = msgArr[1];
-                let playerIdx = msgArr[2];
-                roomIdDiv.innerText = roomId;
-                playerIdxDiv.innerText = playerIdx;
+            roomId = msgArr[1];
+            playerIdx = msgArr[msgArr.length - 1];
+            roomIdDiv.innerText = roomId;
+            playerIdxDiv.innerText = playerIdx;
+            playerIdxes = [];
+            playerPoses = [];
+            for (let i = 2; i < msgArr.length - 1; ++i) {
+                playerIdxes.push(msgArr[i]);
+                playerPoses.push(playerX + playerXOffset * (i - 2));
+                playerPoses.push(playerY);
             }
+            console.log(playerIdxes);
         } else if (type == 'f') { // frame data
-            // TODO 按playerIdx更新显示
-            let op = msg.substr(-2, 1);
+            // TODO 多player更新显示
+            // TODO 将消息放入队列，按一定频率更新显示（平滑网络延迟）
             if (playerY >= canvasH - playerH) {
                 return;
             }
-            if (op == '1')
-                drawPlayer(-40);
-            else
-                drawPlayer(playerSpeed);
+            let msgArr = msg.split(';');
+            frameIdx = msgArr[0].substring(1);
+            for (let i = 1, len = msgArr.length - 1; i < len; ++i) {
+                let opArr = msgArr[i].split(',');
+                let pIdx = opArr[0];
+                let op = opArr[1];
+                if (pIdx == playerIdx) {
+                    if (op == '1')
+                        drawPlayer(clickOffset);
+                    else
+                        drawPlayer(playerSpeed);
+                }
+            }
         }
     }
 

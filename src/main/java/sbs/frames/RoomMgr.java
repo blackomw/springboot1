@@ -4,10 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
-
-import sbs.Main;
 
 public class RoomMgr {
 	static final RoomMgr Instance = new RoomMgr();
@@ -28,13 +25,9 @@ public class RoomMgr {
 		int type = msg.type;
 		WebSocketSession session = msg.session;
 		if (type == '0') {
-			int roomId = autoJoin(session);
 			Room room = rooms.get(autoJoin(session));
-			int playerIdx = room != null ? room.getPlayerIdx(session) : -1;
-			if (session.isOpen())
-				session.sendMessage(new TextMessage("r," + roomId + "," + playerIdx));
-			else
-				Main.Log.warn("player session is closed on handle autoJoin");
+			if (room != null)
+				room.noticePlayerInfo();
 		} else {
 			String playerId = session.getId();
 			Integer roomId = playerRoomIds.get(playerId);
