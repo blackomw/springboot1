@@ -1,6 +1,8 @@
 
-import { firstName, lastName, year } from './a.js';
-console.log("main js loaded", firstName, lastName, year);
+// import { firstName, lastName, year, f } from './a.js';
+// console.log("main js loaded", firstName, lastName, year, f);
+
+import { Blocks } from './blocks.js';
 
 const canvasW = 600, canvasH = 600;
 const canvas = document.getElementById("canvas");
@@ -33,42 +35,40 @@ let playerPoses = {}; // playerIdx=>[x,y]
 const playerW = 20, playerH = 20, playerSpeed = 2, clickOffset = -40;
 let playerX = 100, playerY = 300, playerXOffset = 100;
 
-// ctx.fillStyle = "rgba(0,0,0,1)";
-// ctx.beginPath();
-// ctx.rect(playerX, playerY, playerW, playerH);
-// ctx.fill();
+let blocks = new Blocks(300, canvasW, canvasH, 40, 50);
+blocks.genBlock(ctx);
 
-let t0 = new Date().getTime();
-let t1 = t0;
-let frames = 0;
+// let t0 = new Date().getTime();
+// let t1 = t0;
+// let frames = 0;
 
-// draw();
-function draw() {
-    ++frames;
-    if ((frames & 1) == 0) {
-        window.requestAnimationFrame(draw);
-        return;
-    }
-    t1 = new Date().getTime();
-    if (t1 - t0 >= 1000) {
-        console.log(frames);
-        t0 = t1;
-    }
-    if (playerY >= canvasH - playerH) {
-        return;
-    }
+// // draw();
+// function draw() {
+//     ++frames;
+//     if ((frames & 1) == 0) {
+//         window.requestAnimationFrame(draw);
+//         return;
+//     }
+//     t1 = new Date().getTime();
+//     if (t1 - t0 >= 1000) {
+//         console.log(frames);
+//         t0 = t1;
+//     }
+//     if (playerY >= canvasH - playerH) {
+//         return;
+//     }
 
-    drawPlayer1(playerSpeed);
-    window.requestAnimationFrame(draw);
-}
+//     drawPlayer1(playerSpeed);
+//     window.requestAnimationFrame(draw);
+// }
 
-function drawPlayer1(deltaY) {
-    ctx.clearRect(playerX, playerY, playerW, playerH);
-    playerY += deltaY;
-    ctx.beginPath();
-    ctx.rect(playerX, playerY, playerW, playerH);
-    ctx.fill();
-}
+// function drawPlayer1(deltaY) {
+//     ctx.clearRect(playerX, playerY, playerW, playerH);
+//     playerY += deltaY;
+//     ctx.beginPath();
+//     ctx.rect(playerX, playerY, playerW, playerH);
+//     ctx.fill();
+// }
 
 function drawPlayer(pIdx, x, y) {
     let oldPos = playerPoses[pIdx];

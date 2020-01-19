@@ -44,8 +44,8 @@ public class Room {
 	}
 
 	public void tick() {
-		if (players.size() < PLAYERS)
-			return;
+//		if (players.size() < PLAYERS)
+//			return;
 		if (cur == null)
 			cur = new Frame(idx);
 		frames.add(cur);
