@@ -35,8 +35,11 @@ let playerPoses = {}; // playerIdx=>[x,y]
 const playerW = 20, playerH = 20, playerSpeed = 2, clickOffset = -40;
 let playerX = 100, playerY = 300, playerXOffset = 100;
 
-let blocks = new Blocks(300, canvasW, canvasH, 40, 50);
-blocks.genBlock(ctx);
+const blocksSpeed = 4;
+let blocksOffsetX = 0;
+let blocks = new Blocks(10, canvasW, canvasH, 40, 50);
+blocks.genBlocks();
+blocks.drawBlocks(ctx, blocksOffsetX);
 
 // let t0 = new Date().getTime();
 // let t1 = t0;
@@ -71,6 +74,7 @@ blocks.genBlock(ctx);
 // }
 
 function drawPlayer(pIdx, x, y) {
+    return; // FIXME
     let oldPos = playerPoses[pIdx];
     if (oldPos != null) {
         ctx.clearRect(oldPos[0], oldPos[1], playerW, playerH);
@@ -82,6 +86,9 @@ function drawPlayer(pIdx, x, y) {
 }
 
 function onFrameData(f) {
+    blocksOffsetX -= blocksSpeed;
+    blocks.drawBlocks(ctx, blocksOffsetX);
+
     for (let pIdx in f) {
         let y = playerPoses[pIdx][1];
         if (y >= canvasH - playerH) {
