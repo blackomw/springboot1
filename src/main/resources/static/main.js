@@ -31,69 +31,34 @@ let playerIdx = 0, frameIdx = 0, roomId = 0;
 let playerIdxes = []; // [playerIdx]
 let frameData = []; // frameIdx=>[{playerIdx=>op}]
 
+let stop = false;
 let playerPoses = {}; // playerIdx=>[x,y]
 const playerW = 20, playerH = 20, playerSpeed = 2, clickOffset = -40;
 let playerX = 100, playerY = 300, playerXOffset = 100;
 
 const blocksSpeed = 4;
 let blocksOffsetX = 0;
-let blocks = new Blocks(10, canvasW, canvasH, 40, 50);
+let blocks = new Blocks(300, canvasW, canvasH, 80, 100);
 blocks.genBlocks();
 blocks.drawBlocks(ctx, blocksOffsetX);
 
-// let t0 = new Date().getTime();
-// let t1 = t0;
-// let frames = 0;
-
-// // draw();
-// function draw() {
-//     ++frames;
-//     if ((frames & 1) == 0) {
-//         window.requestAnimationFrame(draw);
-//         return;
-//     }
-//     t1 = new Date().getTime();
-//     if (t1 - t0 >= 1000) {
-//         console.log(frames);
-//         t0 = t1;
-//     }
-//     if (playerY >= canvasH - playerH) {
-//         return;
-//     }
-
-//     drawPlayer1(playerSpeed);
-//     window.requestAnimationFrame(draw);
-// }
-
-// function drawPlayer1(deltaY) {
-//     ctx.clearRect(playerX, playerY, playerW, playerH);
-//     playerY += deltaY;
-//     ctx.beginPath();
-//     ctx.rect(playerX, playerY, playerW, playerH);
-//     ctx.fill();
-// }
-
 function drawPlayer(pIdx, x, y) {
-    return; // FIXME
-    let oldPos = playerPoses[pIdx];
-    if (oldPos != null) {
-        ctx.clearRect(oldPos[0], oldPos[1], playerW, playerH);
-    }
-    ctx.fillStyle = pIdx % 2 == 0 ? "rgba(0,0,0,1)" : "rgba(255,0,0,1)";
+    ctx.fillStyle = pIdx % 2 == 0 ? "rgba(0,0,255,1)" : "rgba(255,0,0,1)";
     ctx.beginPath();
     ctx.rect(x, y, playerW, playerH);
     ctx.fill();
 }
 
 function onFrameData(f) {
+    if (stop)
+        return;
+    ctx.clearRect(0, 0, canvasW, canvasH);
+
     blocksOffsetX -= blocksSpeed;
     blocks.drawBlocks(ctx, blocksOffsetX);
 
     for (let pIdx in f) {
         let y = playerPoses[pIdx][1];
-        if (y >= canvasH - playerH) {
-            return;
-        }
         let op = f[pIdx];
         if (op == '1')
             y += clickOffset;
@@ -102,6 +67,18 @@ function onFrameData(f) {
         drawPlayer(pIdx, playerPoses[pIdx][0], y);
         playerPoses[pIdx][1] = y;
     }
+
+    // FIXME 由于是先移动后检测冲突，会导致穿到上面的障碍物里面(clickOffset较大)
+
+    for (let pIdx in playerPoses) {
+        let x = playerPoses[pIdx][0], y = playerPoses[pIdx][1];
+        if (y <= 0 || y >= canvasH || blocks.checkCollision(blocksOffsetX, x, y, playerW, playerH)) {
+            stop = true;
+            return;
+        }
+    }
+
+    blocks.updateBlocks(blocksOffsetX);
 }
 
 function onUpdateRoomData() {
