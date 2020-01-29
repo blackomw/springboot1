@@ -11,7 +11,7 @@ const ctx = canvas.getContext("2d");
 
 let roomIdDiv = document.getElementById('roomId');
 let playerIdxDiv = document.getElementById('playerIdx');
-
+let scoreDiv = document.getElementById('score');
 // canvas.addEventListener("touchstart", (e) => touchHandler(e), false);
 // canvas.addEventListener("touchend", (e) => touchHandler(e), false);
 // canvas.addEventListener("mousedown", (e) => touchHandler(e), false);
@@ -33,12 +33,13 @@ let frameData = []; // frameIdx=>[{playerIdx=>op}]
 
 let stop = false;
 let playerPoses = {}; // playerIdx=>[x,y]
-const playerW = 20, playerH = 20, playerSpeed = 2, clickOffset = -40;
+let playerScores = {}; // playerIdx=>score
+const playerW = 20, playerH = 20, playerSpeed = 6, clickOffset = -46;
 let playerX = 100, playerY = 300, playerXOffset = 100;
 
-const blocksSpeed = 4;
+const blocksSpeed = 4, blockInitOffsetX = 300, blockWidth = 80, blankWidth = 120;
 let blocksOffsetX = 0;
-let blocks = new Blocks(300, canvasW, canvasH, 80, 100);
+let blocks = new Blocks(blockInitOffsetX, canvasW, canvasH, blockWidth, blankWidth);
 blocks.genBlocks();
 blocks.drawBlocks(ctx, blocksOffsetX);
 
@@ -49,33 +50,84 @@ function drawPlayer(pIdx, x, y) {
     ctx.fill();
 }
 
+function calcScore(px) {
+    return Math.max(0, Math.floor(-(blockInitOffsetX - blankWidth + blocksOffsetX - px) / (blockWidth + blankWidth)));
+}
+
+function updateScoreDiv() {
+    let text = "";
+    for (let pIdx in playerScores) {
+        text += "<div>player" + pIdx + ": " + playerScores[pIdx] + "</div>";
+    }
+    scoreDiv.innerHTML = text;
+}
+
 function onFrameData(f) {
-    if (stop)
+    if (stop) {
         return;
+    }
     ctx.clearRect(0, 0, canvasW, canvasH);
 
     blocksOffsetX -= blocksSpeed;
+    // check x axis collision
+    for (let pIdx in playerPoses) {
+        let x = playerPoses[pIdx][0], y = playerPoses[pIdx][1];
+        if (blocks.checkCollision(blocksOffsetX, x, y, playerW, playerH)) {
+            stop = true;
+            break;
+        }
+    }
     blocks.drawBlocks(ctx, blocksOffsetX);
-
+    if (stop) {
+        for (let pIdx in playerPoses) {
+            drawPlayer(pIdx, playerPoses[pIdx][0], playerPoses[pIdx][1]);
+        }
+        return;
+    }
+    // check y axis collision
     for (let pIdx in f) {
-        let y = playerPoses[pIdx][1];
+        let x = playerPoses[pIdx][0], y = playerPoses[pIdx][1];
         let op = f[pIdx];
         if (op == '1')
             y += clickOffset;
         else
             y += playerSpeed;
+
+        if (y <= 0) { // collision with ceiling
+            y = 0;
+            stop = true;
+        } else if (y >= canvasH - playerH) { // collision with floor
+            y = canvasH - playerH;
+            stop = true;
+        } else {
+            let by = blocks.checkCollision(blocksOffsetX, x, y, playerW, playerH);
+            if (by > 0) { // collision with upper block
+                y = by;
+                stop = true;
+            } else if (by < 0) { // collison with bottom block
+                y = -by - playerH;
+                stop = true;
+            }
+        }
+
         drawPlayer(pIdx, playerPoses[pIdx][0], y);
         playerPoses[pIdx][1] = y;
     }
 
-    // FIXME 由于是先移动后检测冲突，会导致穿到上面的障碍物里面(clickOffset较大)
+    if (stop) {
+        return;
+    }
 
+    let updateScore = false;
     for (let pIdx in playerPoses) {
-        let x = playerPoses[pIdx][0], y = playerPoses[pIdx][1];
-        if (y <= 0 || y >= canvasH || blocks.checkCollision(blocksOffsetX, x, y, playerW, playerH)) {
-            stop = true;
-            return;
+        let score = calcScore(playerPoses[pIdx][0]);
+        if (playerScores[pIdx] != score) {
+            playerScores[pIdx] = score;
+            updateScore = true;
         }
+    }
+    if (updateScore) {
+        updateScoreDiv();
     }
 
     blocks.updateBlocks(blocksOffsetX);
@@ -85,9 +137,12 @@ function onUpdateRoomData() {
     playerIdxes.sort();
     for (let i = 0, n = playerIdxes.length; i < n; ++i) {
         let x = playerX + playerXOffset * i;
-        drawPlayer(playerIdxes[i], x, playerY);
-        playerPoses[playerIdxes[i]] = [x, playerY];
+        let pIdx = playerIdxes[i];
+        drawPlayer(pIdx, x, playerY);
+        playerPoses[pIdx] = [x, playerY];
+        playerScores[pIdx] = 0;
     }
+    updateScoreDiv();
     console.log(playerPoses);
 }
 

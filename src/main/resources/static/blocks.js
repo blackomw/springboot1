@@ -75,12 +75,12 @@ class Blocks {
 
             let h = blocksY[i];
             if ((ty >= 0 && ty <= h) || (ty1 >= 0 && ty1 <= h))
-                return true;
+                return h;
             let downY = h + SpaceHeight, downY1 = this.canvasHeight;
             if ((ty >= downY && ty <= downY1) || (ty1 >= downY && ty1 <= downY1))
-                return true;
+                return -downY;
         }
-        return false;
+        return 0;
     }
 
 }
