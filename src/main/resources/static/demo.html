@@ -1,12 +1,30 @@
 <html>
 
 <head>
-    <style></style>
+    <style>
+        #canvasContainer {
+            position: relative;
+        }
+
+        .canvasLayer {
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            border: solid black 1px;
+        }
+    </style>
 </head>
 
-<body class="body">
+<body>
+    <!-- <div id="canvasContainer">
+        <canvas class="canvasLayer" id="layer1" width="600" height="600" style="z-index: 0;"></canvas>
+        <canvas class="canvasLayer" id="layer2" width="600" height="600" style="z-index: 1;"></canvas>
+    </div> -->
+    <div id="canvasContainer">
+        <canvas id="canvas" class="canvasLayer" style="z-index: 0;"></canvas>
+        <canvas id="canvasPanel" class="canvasLayer" style="z-index: 1;"></canvas>
+    </div>
     <div id="score"></div>
-    <canvas id="canvas" style="border:solid black 1px;"></canvas>
     <br>
     <div style="display: flex">
         <div style="width: 100px" align="center">roomId:</div>
@@ -21,6 +39,5 @@
 <script>
 </script>
 <script type="module" src="./main.js"></script>
-</script>
 
 </html>

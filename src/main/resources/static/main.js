@@ -1,8 +1,5 @@
-
-// import { firstName, lastName, year, f } from './a.js';
-// console.log("main js loaded", firstName, lastName, year, f);
-
 import { Blocks } from './blocks.js';
+import { StartPanel } from './panel.js';
 
 const canvasW = 600, canvasH = 600;
 const canvas = document.getElementById("canvas");
@@ -42,6 +39,9 @@ let blocksOffsetX = 0;
 let blocks = new Blocks(blockInitOffsetX, canvasW, canvasH, blockWidth, blankWidth);
 blocks.genBlocks();
 blocks.drawBlocks(ctx, blocksOffsetX);
+
+let startPanel = new StartPanel(canvasW, canvasH);
+startPanel.drawPanel();
 
 function drawPlayer(pIdx, x, y) {
     ctx.fillStyle = pIdx % 2 == 0 ? "rgba(0,0,255,1)" : "rgba(255,0,0,1)";
@@ -132,6 +132,14 @@ function onFrameData(f) {
 
     blocks.updateBlocks(blocksOffsetX);
 }
+
+// function getMousePos(canvas, event) {
+//     var rect = canvas.getBoundingClientRect();
+//     return {
+//         x: event.clientX - rect.left,
+//         y: event.clientY - rect.top
+//     };
+// }
 
 function onUpdateRoomData() {
     playerIdxes.sort();
