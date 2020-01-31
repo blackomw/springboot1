@@ -1,62 +1,62 @@
 
-const canvasPanel = document.getElementById("canvasPanel");
-const ctxPanel = canvasPanel.getContext("2d");
-canvasPanel.addEventListener("click", (e) => panelTouchHandler(e), false);
-
 class StartPanel {
-    constructor(canvasW, canvasH) {
-        canvasPanel.width = canvasW, canvasPanel.height = canvasH;
+    constructor(ctx, canvasW, canvasH) {
+        this.ctxPanel = ctx;
 
         this.width = 200;
         this.height = 200;
         this.x = Math.floor((canvasW - this.width) / 2);
         this.y = Math.floor((canvasH - this.height) / 2);
+
+        this.startBtnW = 60, this.startBtnH = 30;
+        this.startBtnX = this.x + Math.floor((this.width - this.startBtnW) / 2);
+        this.startBtnY = this.y + this.height - this.startBtnH - 30;
     }
 
     drawPanel() {
         // TODO
-        ctxPanel.fillStyle = "rgba(127,127,127,1)";
-        ctxPanel.beginPath();
-        ctxPanel.rect(this.x, this.y, this.width, this.height);
-        ctxPanel.fill();
+        this.ctxPanel.fillStyle = "rgba(127,127,127,1)";
+        this.ctxPanel.beginPath();
+        this.ctxPanel.rect(this.x, this.y, this.width, this.height);
+        this.ctxPanel.fill();
 
-        this.drawStartBtn(1);
-
+        this.drawStartBtn();
     }
 
-    drawStartBtn(alpha) {
-        let startBtnW = 60, startBtnH = 30;
-        let startBtnX = this.x + Math.floor((this.width - startBtnW) / 2);
-        let startBtnY = this.y + this.height - startBtnH - 30;
+    drawStartBtn(isDown) {
+        this.ctxPanel.clearRect(this.startBtnX, this.startBtnY, this.startBtnW, this.startBtnH);
 
-        ctxPanel.clearRect(startBtnX, startBtnY, startBtnW, startBtnH);
+        let color = isDown ? 127 : 255;
+        this.ctxPanel.fillStyle = "rgba(0," + color + "," + color + ",1)";
+        this.ctxPanel.beginPath();
+        this.ctxPanel.rect(this.startBtnX, this.startBtnY, this.startBtnW, this.startBtnH);
+        this.ctxPanel.fill();
 
-        ctxPanel.fillStyle = "rgba(0,127,127," + alpha + ")";
-        ctxPanel.beginPath();
-        ctxPanel.rect(startBtnX, startBtnY, startBtnW, startBtnH);
-        ctxPanel.fill();
+        this.ctxPanel.strokeStyle = "rgba(0,0," + color + ",1)";
+        this.ctxPanel.lineWidth = '2';
+        this.ctxPanel.beginPath();
+        this.ctxPanel.rect(this.startBtnX, this.startBtnY, this.startBtnW, this.startBtnH);
+        this.ctxPanel.stroke();
 
-        ctxPanel.strokeStyle = "rgba(0,0,127," + alpha + ")";
-        ctxPanel.lineWidth = '2';
-        ctxPanel.beginPath();
-        ctxPanel.rect(startBtnX, startBtnY, startBtnW, startBtnH);
-        ctxPanel.stroke();
-
-        ctxPanel.fillStyle = "rgba(127,0,0,1)";
-        ctxPanel.font = "bold 20px '微软雅黑'";
-        ctxPanel.textBaseline = 'middle';
-        ctxPanel.textAlign = "center"
-        ctxPanel.fillText('Start', startBtnX + Math.floor(startBtnW / 2), startBtnY + Math.floor(startBtnH / 2));
+        this.ctxPanel.fillStyle = "rgba(127,0,0,1)";
+        this.ctxPanel.font = "bold 20px '微软雅黑'";
+        this.ctxPanel.textBaseline = 'middle';
+        this.ctxPanel.textAlign = "center"
+        this.ctxPanel.fillText('Start', this.startBtnX + Math.floor(this.startBtnW / 2), this.startBtnY + Math.floor(this.startBtnH / 2));
     }
-}
 
-function panelTouchHandler(e) {
-    // TODO
-    console.log("StartPanel event", e);
-    drawStartBtn(0.5); // FIXME
-    setTimeout(() => {
-        drawStartBtn(1);
-    }, 500);
+    touchHandler(e) {
+        let clickX = e.offsetX, clickY = e.offsetY;
+        if (clickX >= this.startBtnX && clickX <= this.startBtnX + this.startBtnW
+            && clickY >= this.startBtnY && clickY <= this.startBtnY + this.startBtnH) {
+            this.drawStartBtn(true);
+            setTimeout(() => {
+                this.drawStartBtn();
+            }, 100);
+            return true;
+        }
+        return false;
+    }
 }
 
 export { StartPanel }

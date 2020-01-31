@@ -1,12 +1,3 @@
-// import { bb } from './b.js'
-// var firstName = 'Michael';
-// var lastName = 'Jackson';
-// var year = 1958;
-// console.log(bb);
-// export { firstName, lastName, year };
-// var f = 'ffff';
-// export { f };
-
 const SpaceHeight = 160; // 中间缺口处的高度
 const BlockMinHeight = 80; // 障碍物最小高度
 let blocksY = [];

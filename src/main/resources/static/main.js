@@ -5,24 +5,24 @@ const canvasW = 600, canvasH = 600;
 const canvas = document.getElementById("canvas");
 canvas.width = canvasW, canvas.height = canvasH;
 const ctx = canvas.getContext("2d");
-
-let roomIdDiv = document.getElementById('roomId');
-let playerIdxDiv = document.getElementById('playerIdx');
-let scoreDiv = document.getElementById('score');
 // canvas.addEventListener("touchstart", (e) => touchHandler(e), false);
 // canvas.addEventListener("touchend", (e) => touchHandler(e), false);
 // canvas.addEventListener("mousedown", (e) => touchHandler(e), false);
 // canvas.addEventListener("mouseup", (e) => touchHandler(e), false);
 canvas.addEventListener("click", (e) => touchHandler(e), false);
 
-function log(msg) {
-    const p = document.getElementById('log');
-    p.innerHTML = msg + "\n" + p.innerHTML;
-}
+const canvasPanel = document.getElementById("canvasPanel");
+canvasPanel.width = canvasW, canvasPanel.height = canvasH;
+const ctxPanel = canvasPanel.getContext("2d");
+canvasPanel.addEventListener("click", (e) => panelTouchHandler(e), false);
+// canvasPanel.addEventListener("touchstart", (e) => panelTouchHandler(e, true), false);
+// canvasPanel.addEventListener("touchend", (e) => panelTouchHandler(e), false);
+// canvasPanel.addEventListener("mousedown", (e) => panelTouchHandler(e, true), false);
+// canvasPanel.addEventListener("mouseup", (e) => panelTouchHandler(e), false);
 
-function touchHandler(e) {
-    send("1");
-}
+let roomIdDiv = document.getElementById('roomId');
+let playerIdxDiv = document.getElementById('playerIdx');
+let scoreDiv = document.getElementById('score');
 
 let playerIdx = 0, frameIdx = 0, roomId = 0;
 let playerIdxes = []; // [playerIdx]
@@ -40,8 +40,20 @@ let blocks = new Blocks(blockInitOffsetX, canvasW, canvasH, blockWidth, blankWid
 blocks.genBlocks();
 blocks.drawBlocks(ctx, blocksOffsetX);
 
-let startPanel = new StartPanel(canvasW, canvasH);
+let startPanel = new StartPanel(ctxPanel, canvasPanel.width, canvasPanel.height);
 startPanel.drawPanel();
+
+function panelTouchHandler(e) {
+    let isStart = startPanel.touchHandler(e);
+    console.log("panelTouchHandler", isStart);
+    if (isStart) { // TODO
+        canvasPanel.style.display = "none";
+    }
+}
+
+function touchHandler(e) {
+    send("1");
+}
 
 function drawPlayer(pIdx, x, y) {
     ctx.fillStyle = pIdx % 2 == 0 ? "rgba(0,0,255,1)" : "rgba(255,0,0,1)";
