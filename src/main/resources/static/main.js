@@ -43,15 +43,20 @@ blocks.drawBlocks(ctx, blocksOffsetX);
 let startPanel = new StartPanel(ctxPanel, canvasPanel.width, canvasPanel.height);
 startPanel.drawPanel();
 
+const State = { Matching: 0, Matched: 1, Playing: 2, End: 3 }
+console.log("debug state", State.Matched);
+
 function panelTouchHandler(e) {
-    let isStart = startPanel.touchHandler(e);
-    console.log("panelTouchHandler", isStart);
-    if (isStart) { // TODO
-        canvasPanel.style.display = "none";
-    }
+    console.log("panelTouchHandler");
+    // let isStart = startPanel.touchHandler(e);
+    // console.log("panelTouchHandler", isStart);
+    // if (isStart) {
+    //     canvasPanel.style.display = "none";
+    // }
 }
 
 function touchHandler(e) {
+    console.log("touchHandler");
     send("1");
 }
 
@@ -144,14 +149,6 @@ function onFrameData(f) {
 
     blocks.updateBlocks(blocksOffsetX);
 }
-
-// function getMousePos(canvas, event) {
-//     var rect = canvas.getBoundingClientRect();
-//     return {
-//         x: event.clientX - rect.left,
-//         y: event.clientY - rect.top
-//     };
-// }
 
 function onUpdateRoomData() {
     playerIdxes.sort();
