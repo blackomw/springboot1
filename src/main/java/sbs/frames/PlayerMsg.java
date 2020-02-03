@@ -3,6 +3,20 @@ package sbs.frames;
 import org.springframework.web.socket.WebSocketSession;
 
 public class PlayerMsg {
+	public static enum MsgType {
+		Ready('0'), Start('1'), Click('2'),;
+
+		private int type;
+
+		MsgType(int type) {
+			this.type = type;
+		}
+
+		public int getType() {
+			return type;
+		}
+	}
+
 	final int type;
 	final WebSocketSession session;
 	final String data;

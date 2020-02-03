@@ -21,6 +21,7 @@ public class Room {
 	private class FramePlayer {
 		int idx;
 		WebSocketSession session;
+		boolean start;
 
 		public FramePlayer(int idx, WebSocketSession session) {
 			this.idx = idx;
@@ -44,8 +45,14 @@ public class Room {
 	}
 
 	public void tick() {
-//		if (players.size() < PLAYERS)
-//			return;
+		int n = players.size();
+		if (n < PLAYERS)
+			return;
+		for (int i = 0; i < n; ++i) {
+			if (!players.get(i).start)
+				return;
+		}
+
 		if (cur == null)
 			cur = new Frame(idx);
 		frames.add(cur);
@@ -66,6 +73,16 @@ public class Room {
 			broadcast(new TextMessage(sb.toString()));
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+	}
+
+	public void playerStart(WebSocketSession session) {
+		for (int i = 0, n = players.size(); i < n; ++i) {
+			FramePlayer fp = players.get(i);
+			if (fp.session == session) {
+				fp.start = true;
+				return;
+			}
 		}
 	}
 

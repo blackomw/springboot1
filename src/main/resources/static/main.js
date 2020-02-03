@@ -41,10 +41,14 @@ blocks.genBlocks();
 blocks.drawBlocks(ctx, blocksOffsetX);
 
 let startPanel = new StartPanel(ctxPanel, canvasPanel.width, canvasPanel.height);
+canvasPanel.width = 120, canvasPanel.height = 56;
+canvasPanel.style.border = "0";
 startPanel.drawPanel();
 
-const State = { Matching: 0, Matched: 1, Playing: 2, End: 3 }
+const State = { Matching: 0, Matched: 1, Playing: 2, End: 3 };
 console.log("debug state", State.Matched);
+
+const PlayerOp = { Ready: '0', Start: '1', Click: '2' };
 
 function panelTouchHandler(e) {
     console.log("panelTouchHandler");
@@ -57,7 +61,7 @@ function panelTouchHandler(e) {
 
 function touchHandler(e) {
     console.log("touchHandler");
-    send("1");
+    send(PlayerOp.Click);
 }
 
 function drawPlayer(pIdx, x, y) {
@@ -105,7 +109,7 @@ function onFrameData(f) {
     for (let pIdx in f) {
         let x = playerPoses[pIdx][0], y = playerPoses[pIdx][1];
         let op = f[pIdx];
-        if (op == '1')
+        if (op == PlayerOp.Click)
             y += clickOffset;
         else
             y += playerSpeed;
@@ -159,6 +163,8 @@ function onUpdateRoomData() {
         playerPoses[pIdx] = [x, playerY];
         playerScores[pIdx] = 0;
     }
+    // TODO 两人时，开始倒计时5秒，之后发PlayerOp.Start
+    
     updateScoreDiv();
     console.log(playerPoses);
 }
@@ -202,7 +208,7 @@ function connectWebSocket() { //建立WebSocket连接
 
     websocket.onopen = function () { //打开webSokcet连接时，回调该函数
         console.log("on open");
-        send("0");
+        send(PlayerOp.Ready);
     }
 
     websocket.onclose = function (e) { //关闭webSocket连接时，回调该函数

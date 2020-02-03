@@ -6,6 +6,8 @@ import java.util.Iterator;
 
 import org.springframework.web.socket.WebSocketSession;
 
+import sbs.frames.PlayerMsg.MsgType;
+
 public class RoomMgr {
 	static final RoomMgr Instance = new RoomMgr();
 
@@ -24,7 +26,7 @@ public class RoomMgr {
 	public void handleMsg(PlayerMsg msg) throws IOException {
 		int type = msg.type;
 		WebSocketSession session = msg.session;
-		if (type == '0') {
+		if (type == MsgType.Ready.getType()) {
 			Room room = rooms.get(autoJoin(session));
 			if (room != null)
 				room.noticePlayerInfo();
@@ -32,8 +34,13 @@ public class RoomMgr {
 			String playerId = session.getId();
 			Integer roomId = playerRoomIds.get(playerId);
 			Room room = roomId != null ? rooms.get(roomId) : null;
-			if (room != null)
-				room.playerAction(session, Byte.parseByte(msg.data));
+			if (room != null) {
+				if (type == MsgType.Start.getType()) {
+					room.playerStart(session);
+				} else if (type == MsgType.Click.getType()) {
+					room.playerAction(session, Byte.parseByte(msg.data));
+				}
+			}
 		}
 	}
 
