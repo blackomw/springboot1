@@ -9,6 +9,20 @@ import org.springframework.web.socket.WebSocketSession;
 public class Room {
 	public static final int PLAYERS = 2;
 
+	public static enum PlayerState { // Ready->Start->End->Ready
+		Ready(0), Start(1), End(3);
+
+		private int state;
+
+		PlayerState(int state) {
+			this.state = state;
+		}
+
+		public int getState() {
+			return state;
+		}
+	}
+
 	private class Frame {
 		final int idx;
 		byte[] op = new byte[PLAYERS];
@@ -21,11 +35,12 @@ public class Room {
 	private class FramePlayer {
 		int idx;
 		WebSocketSession session;
-		boolean start;
+		PlayerState state;
 
 		public FramePlayer(int idx, WebSocketSession session) {
 			this.idx = idx;
 			this.session = session;
+			this.state = PlayerState.Ready;
 		}
 	}
 
@@ -49,7 +64,7 @@ public class Room {
 		if (n < PLAYERS)
 			return;
 		for (int i = 0; i < n; ++i) {
-			if (!players.get(i).start)
+			if (players.get(i).state != PlayerState.Start)
 				return;
 		}
 
@@ -76,12 +91,32 @@ public class Room {
 		}
 	}
 
+	public void playerReady(WebSocketSession session) {
+		for (int i = 0, n = players.size(); i < n; ++i) {
+			FramePlayer fp = players.get(i);
+			if (fp.session == session && fp.state == PlayerState.End) {
+				fp.state = PlayerState.Ready;
+				break;
+			}
+		}
+	}
+
 	public void playerStart(WebSocketSession session) {
 		for (int i = 0, n = players.size(); i < n; ++i) {
 			FramePlayer fp = players.get(i);
-			if (fp.session == session) {
-				fp.start = true;
-				return;
+			if (fp.session == session && fp.state == PlayerState.Ready) {
+				fp.state = PlayerState.Start;
+				break;
+			}
+		}
+	}
+
+	public void playerEnd(WebSocketSession session) {
+		for (int i = 0, n = players.size(); i < n; ++i) {
+			FramePlayer fp = players.get(i);
+			if (fp.session == session && fp.state == PlayerState.Start) {
+				fp.state = PlayerState.End;
+				break;
 			}
 		}
 	}

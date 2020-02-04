@@ -28,8 +28,10 @@ public class RoomMgr {
 		WebSocketSession session = msg.session;
 		if (type == MsgType.Ready.getType()) {
 			Room room = rooms.get(autoJoin(session));
-			if (room != null)
+			if (room != null) {
+				room.playerReady(session);
 				room.noticePlayerInfo();
+			}
 		} else {
 			String playerId = session.getId();
 			Integer roomId = playerRoomIds.get(playerId);
@@ -39,6 +41,8 @@ public class RoomMgr {
 					room.playerStart(session);
 				} else if (type == MsgType.Click.getType()) {
 					room.playerAction(session, Byte.parseByte(msg.data));
+				} else if (type == MsgType.End.getType()) {
+					room.playerEnd(session);
 				}
 			}
 		}

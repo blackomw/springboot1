@@ -4,7 +4,7 @@ import org.springframework.web.socket.WebSocketSession;
 
 public class PlayerMsg {
 	public static enum MsgType {
-		Ready('0'), Start('1'), Click('2'),;
+		Ready('0'), Start('1'), Click('2'), End('3');
 
 		private int type;
 

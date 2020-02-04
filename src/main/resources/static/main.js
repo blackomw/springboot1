@@ -24,7 +24,7 @@ let roomIdDiv = document.getElementById('roomId');
 let playerIdxDiv = document.getElementById('playerIdx');
 let scoreDiv = document.getElementById('score');
 
-let playerIdx = 0, frameIdx = 0, roomId = 0;
+let playerIdx = 0, frameIdx = -1, roomId = 0;
 let playerIdxes = []; // [playerIdx]
 let frameData = []; // frameIdx=>[{playerIdx=>op}]
 
@@ -40,23 +40,29 @@ let blocks = new Blocks(blockInitOffsetX, canvasW, canvasH, blockWidth, blankWid
 blocks.genBlocks();
 blocks.drawBlocks(ctx, blocksOffsetX);
 
-let startPanel = new StartPanel(ctxPanel, canvasPanel.width, canvasPanel.height);
-canvasPanel.width = 120, canvasPanel.height = 56;
-canvasPanel.style.border = "0";
-startPanel.drawPanel();
-
 const State = { Matching: 0, Matched: 1, Playing: 2, End: 3 };
-console.log("debug state", State.Matched);
+const PlayerOp = { Ready: '0', Start: '1', Click: '2', End: '3' };
+let startPanel = new StartPanel(ctxPanel, canvasPanel.width, canvasPanel.height);
+startPanel.drawMatching();
 
-const PlayerOp = { Ready: '0', Start: '1', Click: '2' };
+// setTimeout(() => {
+//     startPanel.drawMatched(() => {
+//         console.log("callback");
+//         onPlaying();
+//         setTimeout(() => onEnd(), 3000);
+//     });
+// }, 3000);
+// console.log(Object.values(State),Object.values(PlayerOp));
+// onPlaying();
+// console.log(Number('1'));
+
 
 function panelTouchHandler(e) {
-    console.log("panelTouchHandler");
-    // let isStart = startPanel.touchHandler(e);
-    // console.log("panelTouchHandler", isStart);
-    // if (isStart) {
-    //     canvasPanel.style.display = "none";
-    // }
+    let isStart = startPanel.touchHandler(e);
+    console.log("panelTouchHandler", isStart);
+    if (isStart) {
+        startPanel.drawMatching();
+    }
 }
 
 function touchHandler(e) {
@@ -71,16 +77,39 @@ function drawPlayer(pIdx, x, y) {
     ctx.fill();
 }
 
+function isWin() {
+    let myScore = playerScores[playerIdx];
+    if (!myScore) {
+        return false;
+    }
+    for (let pIdx in playerScores) {
+        if (pIdx != playerIdx && myScore <= playerScores[pIdx]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function onPlaying() {
+    canvasPanel.width = 120, canvasPanel.height = 56;
+    canvasPanel.style.border = "0";
+    startPanel.drawPlaying(Object.values(playerScores));
+}
+
+function onEnd() {
+    send(PlayerOp.End);
+
+    canvasPanel.width = canvasW, canvasPanel.height = canvasH;
+    canvasPanel.style.border = "";
+    startPanel.drawEnd(isWin());
+}
+
 function calcScore(px) {
     return Math.max(0, Math.floor(-(blockInitOffsetX - blankWidth + blocksOffsetX - px) / (blockWidth + blankWidth)));
 }
 
-function updateScoreDiv() {
-    let text = "";
-    for (let pIdx in playerScores) {
-        text += "<div>player" + pIdx + ": " + playerScores[pIdx] + "</div>";
-    }
-    scoreDiv.innerHTML = text;
+function updateScore() {
+    startPanel.drawPlaying(Object.values(playerScores));
 }
 
 function onFrameData(f) {
@@ -139,16 +168,16 @@ function onFrameData(f) {
         return;
     }
 
-    let updateScore = false;
+    let isUpdateScore = false;
     for (let pIdx in playerPoses) {
         let score = calcScore(playerPoses[pIdx][0]);
         if (playerScores[pIdx] != score) {
             playerScores[pIdx] = score;
-            updateScore = true;
+            isUpdateScore = true;
         }
     }
-    if (updateScore) {
-        updateScoreDiv();
+    if (isUpdateScore) {
+        updateScore();
     }
 
     blocks.updateBlocks(blocksOffsetX);
@@ -163,9 +192,14 @@ function onUpdateRoomData() {
         playerPoses[pIdx] = [x, playerY];
         playerScores[pIdx] = 0;
     }
-    // TODO 两人时，开始倒计时5秒，之后发PlayerOp.Start
-    
-    updateScoreDiv();
+
+    if (playerIdxes.length == 2) { // 两人时开始倒计时5秒，之后发PlayerOp.Start
+        startPanel.drawMatched(() => {
+            console.log('start');
+            send(PlayerOp.Start);
+            // onPlaying();
+        });
+    }
     console.log(playerPoses);
 }
 
@@ -186,7 +220,7 @@ function handleMsg(msg) {
         // TODO 多player更新显示
         // TODO 将消息放入队列，按一定频率更新显示（平滑网络延迟）
         let msgArr = msg.split(';');
-        frameIdx = msgArr[0].substring(1);
+        frameIdx = Number(msgArr[0].substring(1));
         frameData[frameIdx] = {};
         for (let i = 1, len = msgArr.length - 1; i < len; ++i) {
             let opArr = msgArr[i].split(',');
@@ -194,8 +228,12 @@ function handleMsg(msg) {
             let op = opArr[1];
             frameData[frameIdx][pIdx] = op;
         }
-
-        onFrameData(frameData[frameIdx]);
+        if (frameIdx == 0) {
+            onPlaying();
+        }
+        if (onFrameData(frameData[frameIdx])) {
+            onEnd();
+        }
     }
 }
 
