@@ -87,6 +87,8 @@ class StartPanel {
     }
 
     drawPlaying(scores) {
+        this.ctxPanel.clearRect(0, 0, this.width, this.height);
+
         let score0 = 0, score1 = 0;
         if (scores.length == 2) {
             score0 = scores[0], score1 = scores[1];
@@ -150,9 +152,9 @@ class StartPanel {
         if (clickX >= this.startBtnX && clickX <= this.startBtnX + this.startBtnW
             && clickY >= this.startBtnY && clickY <= this.startBtnY + this.startBtnH) {
             this._drawStartBtn(true);
-            setTimeout(() => {
-                this._drawStartBtn();
-            }, 100);
+            // setTimeout(() => {
+            //     this._drawStartBtn();
+            // }, 100);
             return true;
         }
         return false;

@@ -20,11 +20,7 @@ canvasPanel.addEventListener("click", (e) => panelTouchHandler(e), false);
 // canvasPanel.addEventListener("mousedown", (e) => panelTouchHandler(e, true), false);
 // canvasPanel.addEventListener("mouseup", (e) => panelTouchHandler(e), false);
 
-let roomIdDiv = document.getElementById('roomId');
-let playerIdxDiv = document.getElementById('playerIdx');
-let scoreDiv = document.getElementById('score');
-
-let playerIdx = 0, frameIdx = -1, roomId = 0;
+let playerIdx = 0, frameIdx = -1, roomSeed = 0;
 let playerIdxes = []; // [playerIdx]
 let frameData = []; // frameIdx=>[{playerIdx=>op}]
 
@@ -36,32 +32,17 @@ let playerX = 100, playerY = 300, playerXOffset = 100;
 
 const blocksSpeed = 4, blockInitOffsetX = 300, blockWidth = 80, blankWidth = 120;
 let blocksOffsetX = 0;
-let blocks = new Blocks(blockInitOffsetX, canvasW, canvasH, blockWidth, blankWidth);
-blocks.genBlocks();
-blocks.drawBlocks(ctx, blocksOffsetX);
+let blocks = null;
 
-const State = { Matching: 0, Matched: 1, Playing: 2, End: 3 };
+// const State = { Matching: 0, Matched: 1, Playing: 2, End: 3 };
 const PlayerOp = { Ready: '0', Start: '1', Click: '2', End: '3' };
 let startPanel = new StartPanel(ctxPanel, canvasPanel.width, canvasPanel.height);
-startPanel.drawMatching();
-
-// setTimeout(() => {
-//     startPanel.drawMatched(() => {
-//         console.log("callback");
-//         onPlaying();
-//         setTimeout(() => onEnd(), 3000);
-//     });
-// }, 3000);
-// console.log(Object.values(State),Object.values(PlayerOp));
-// onPlaying();
-// console.log(Number('1'));
 
 
 function panelTouchHandler(e) {
-    let isStart = startPanel.touchHandler(e);
-    console.log("panelTouchHandler", isStart);
-    if (isStart) {
-        startPanel.drawMatching();
+    console.log("panelTouchHandler");
+    if (startPanel.touchHandler(e)) {
+        onReady();
     }
 }
 
@@ -70,11 +51,29 @@ function touchHandler(e) {
     send(PlayerOp.Click);
 }
 
-function drawPlayer(pIdx, x, y) {
-    ctx.fillStyle = pIdx % 2 == 0 ? "rgba(0,0,255,1)" : "rgba(255,0,0,1)";
+function drawPlayer(isRed, x, y) {
+    ctx.fillStyle = isRed ? "rgba(255,0,0,1)" : "rgba(0,0,255,1)";
     ctx.beginPath();
     ctx.rect(x, y, playerW, playerH);
     ctx.fill();
+}
+
+function drawPlayers() {
+    for (let pIdx in playerPoses) {
+        drawPlayer(playerIdx == pIdx, playerPoses[pIdx][0], playerPoses[pIdx][1]);
+    }
+}
+
+function resetBlocks() {
+    blocksOffsetX = 0;
+    blocks = new Blocks(roomSeed, blockInitOffsetX, canvasW, canvasH, blockWidth, blankWidth);
+    blocks.genBlocks();
+    blocks.drawBlocks(ctx, blocksOffsetX);
+}
+
+function onReady() {
+    startPanel.drawMatching();
+    send(PlayerOp.Ready);
 }
 
 function isWin() {
@@ -101,7 +100,21 @@ function onEnd() {
 
     canvasPanel.width = canvasW, canvasPanel.height = canvasH;
     canvasPanel.style.border = "";
+    startPanel.drawPlaying(Object.values(playerScores));
     startPanel.drawEnd(isWin());
+}
+
+function onRestart() {
+    stop = false;
+    frameIdx = -1;
+    frameData = [];
+    ctx.clearRect(0, 0, canvasW, canvasH);
+    drawPlayers();
+    resetBlocks();
+    startPanel.drawMatched(() => {
+        console.log('start');
+        send(PlayerOp.Start);
+    });
 }
 
 function calcScore(px) {
@@ -129,9 +142,7 @@ function onFrameData(f) {
     }
     blocks.drawBlocks(ctx, blocksOffsetX);
     if (stop) {
-        for (let pIdx in playerPoses) {
-            drawPlayer(pIdx, playerPoses[pIdx][0], playerPoses[pIdx][1]);
-        }
+        drawPlayers();
         return;
     }
     // check y axis collision
@@ -159,10 +170,9 @@ function onFrameData(f) {
                 stop = true;
             }
         }
-
-        drawPlayer(pIdx, playerPoses[pIdx][0], y);
         playerPoses[pIdx][1] = y;
     }
+    drawPlayers();
 
     if (stop) {
         return;
@@ -184,40 +194,34 @@ function onFrameData(f) {
 }
 
 function onUpdateRoomData() {
+    playerPoses = {};
+    playerScores = {};
     playerIdxes.sort();
     for (let i = 0, n = playerIdxes.length; i < n; ++i) {
         let x = playerX + playerXOffset * i;
         let pIdx = playerIdxes[i];
-        drawPlayer(pIdx, x, playerY);
         playerPoses[pIdx] = [x, playerY];
         playerScores[pIdx] = 0;
     }
-
-    if (playerIdxes.length == 2) { // 两人时开始倒计时5秒，之后发PlayerOp.Start
-        startPanel.drawMatched(() => {
-            console.log('start');
-            send(PlayerOp.Start);
-            // onPlaying();
-        });
+    if (playerIdxes.length == 2) {
+        onRestart();
     }
     console.log(playerPoses);
 }
 
 function handleMsg(msg) {
+    console.log(msg);
     let type = msg.charAt(0);
     if (type == 'r') { // room data
         let msgArr = msg.split(',');
-        roomId = msgArr[1];
+        roomSeed = msgArr[1];
         playerIdx = msgArr[msgArr.length - 1];
-        roomIdDiv.innerText = roomId;
-        playerIdxDiv.innerText = playerIdx;
         playerIdxes = [];
         for (let i = 2; i < msgArr.length - 1; ++i) {
             playerIdxes.push(msgArr[i]);
         }
         onUpdateRoomData();
     } else if (type == 'f') { // frame data
-        // TODO 多player更新显示
         // TODO 将消息放入队列，按一定频率更新显示（平滑网络延迟）
         let msgArr = msg.split(';');
         frameIdx = Number(msgArr[0].substring(1));
@@ -231,7 +235,8 @@ function handleMsg(msg) {
         if (frameIdx == 0) {
             onPlaying();
         }
-        if (onFrameData(frameData[frameIdx])) {
+        onFrameData(frameData[frameIdx]);
+        if (stop) {
             onEnd();
         }
     }
@@ -246,7 +251,7 @@ function connectWebSocket() { //建立WebSocket连接
 
     websocket.onopen = function () { //打开webSokcet连接时，回调该函数
         console.log("on open");
-        send(PlayerOp.Ready);
+        onReady();
     }
 
     websocket.onclose = function (e) { //关闭webSocket连接时，回调该函数

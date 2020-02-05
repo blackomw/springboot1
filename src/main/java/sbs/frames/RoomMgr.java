@@ -106,5 +106,4 @@ public class RoomMgr {
 		}
 		return 0;
 	}
-
 }

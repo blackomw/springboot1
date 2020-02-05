@@ -44,15 +44,17 @@ public class Room {
 		}
 	}
 
-	private int id; // 房间id
+	private final int id; // 房间id
 	private int idx; // 当前帧数
 	private Frame cur; // 当前帧
 	private ArrayList<Frame> frames = new ArrayList<>(); // 所有帧数据
 	private ArrayList<FramePlayer> players = new ArrayList<>(PLAYERS); // 房间内的玩家
 	private int playerIdxCounter; // 房间内玩家索引计数器
+	private int clientSeed; // 客户端障碍物随机种子
 
 	public Room(int id) {
 		this.id = id;
+		this.clientSeed = allocClientSeed();
 	}
 
 	public int getId() {
@@ -99,6 +101,7 @@ public class Room {
 				break;
 			}
 		}
+		reset();
 	}
 
 	public void playerStart(WebSocketSession session) {
@@ -136,16 +139,17 @@ public class Room {
 
 	public void noticePlayerInfo() throws IOException {
 		StringBuilder sb = new StringBuilder(50);
-		sb.append("r,").append(id).append(",");
+		sb.append("r,").append(clientSeed).append(",");
 		for (int i = 0, n = players.size(); i < n; ++i) {
-			sb.append(players.get(i).idx).append(",");
+			FramePlayer fp = players.get(i);
+			if (fp.state == PlayerState.Ready)
+				sb.append(fp.idx).append(",");
 		}
 		for (int i = 0, n = players.size(); i < n; ++i) {
 			FramePlayer fp = players.get(i);
 			WebSocketSession session = fp.session;
-			if (session.isOpen()) {
+			if (session.isOpen())
 				session.sendMessage(new TextMessage(sb.toString() + fp.idx));
-			}
 		}
 	}
 
@@ -181,22 +185,24 @@ public class Room {
 		return players.size();
 	}
 
-//	public int getPlayerIdx(WebSocketSession session) {
-//		for (int i = 0, n = players.size(); i < n; ++i) {
-//			FramePlayer fp = players.get(i);
-//			if (fp.session == session) {
-//				return fp.idx;
-//			}
-//		}
-//		return -1;
-//	}
-
 	public void broadcast(TextMessage msg) throws IOException {
 		for (int i = 0, n = players.size(); i < n; ++i) {
 			WebSocketSession session = players.get(i).session;
-			if (session.isOpen()) {
+			if (session.isOpen())
 				session.sendMessage(msg);
-			}
 		}
+	}
+
+	private void reset() {
+		if (idx != 0) {
+			idx = 0;
+			cur = null;
+			frames.clear();
+			clientSeed = allocClientSeed();
+		}
+	}
+
+	private int allocClientSeed() {
+		return (int) (System.currentTimeMillis() / 1000 + id);
 	}
 }
