@@ -25,6 +25,7 @@ let playerIdxes = []; // [playerIdx]
 let frameData = []; // frameIdx=>[{playerIdx=>op}]
 
 let stop = false;
+let playerCollisions = {}; // playerIdx=>true/false
 let playerPoses = {}; // playerIdx=>[x,y]
 let playerScores = {}; // playerIdx=>score
 const playerW = 20, playerH = 20, playerSpeed = 6, clickOffset = -46;
@@ -77,22 +78,13 @@ function onReady() {
 }
 
 function isWin() {
-    let myScore = playerScores[playerIdx];
-    if (!myScore) {
-        return false;
-    }
-    for (let pIdx in playerScores) {
-        if (pIdx != playerIdx && myScore <= playerScores[pIdx]) {
-            return false;
-        }
-    }
-    return true;
+    return !playerCollisions[playerIdx];
 }
 
 function onPlaying() {
     canvasPanel.width = 120, canvasPanel.height = 56;
     canvasPanel.style.border = "0";
-    startPanel.drawPlaying(Object.values(playerScores));
+    updateScore();
 }
 
 function onEnd() {
@@ -100,7 +92,8 @@ function onEnd() {
 
     canvasPanel.width = canvasW, canvasPanel.height = canvasH;
     canvasPanel.style.border = "";
-    startPanel.drawPlaying(Object.values(playerScores));
+    updateScore();
+    console.log(playerCollisions);
     startPanel.drawEnd(isWin());
 }
 
@@ -122,7 +115,14 @@ function calcScore(px) {
 }
 
 function updateScore() {
-    startPanel.drawPlaying(Object.values(playerScores));
+    let scores = [];
+    scores.push(playerScores[playerIdx]);
+    for (let pIdx in playerScores) {
+        if (pIdx != playerIdx) {
+            scores.push(playerScores[pIdx]);
+        }
+    }
+    startPanel.drawPlaying(scores);
 }
 
 function onFrameData(f) {
@@ -137,7 +137,7 @@ function onFrameData(f) {
         let x = playerPoses[pIdx][0], y = playerPoses[pIdx][1];
         if (blocks.checkCollision(blocksOffsetX, x, y, playerW, playerH)) {
             stop = true;
-            break;
+            playerCollisions[pIdx] = true;
         }
     }
     blocks.drawBlocks(ctx, blocksOffsetX);
@@ -157,17 +157,21 @@ function onFrameData(f) {
         if (y <= 0) { // collision with ceiling
             y = 0;
             stop = true;
+            playerCollisions[pIdx] = true;
         } else if (y >= canvasH - playerH) { // collision with floor
             y = canvasH - playerH;
             stop = true;
+            playerCollisions[pIdx] = true;
         } else {
             let by = blocks.checkCollision(blocksOffsetX, x, y, playerW, playerH);
             if (by > 0) { // collision with upper block
                 y = by;
                 stop = true;
+                playerCollisions[pIdx] = true;
             } else if (by < 0) { // collison with bottom block
                 y = -by - playerH;
                 stop = true;
+                playerCollisions[pIdx] = true;
             }
         }
         playerPoses[pIdx][1] = y;
@@ -196,12 +200,14 @@ function onFrameData(f) {
 function onUpdateRoomData() {
     playerPoses = {};
     playerScores = {};
+    playerCollisions = {};
     playerIdxes.sort();
     for (let i = 0, n = playerIdxes.length; i < n; ++i) {
         let x = playerX + playerXOffset * i;
         let pIdx = playerIdxes[i];
         playerPoses[pIdx] = [x, playerY];
         playerScores[pIdx] = 0;
+        playerCollisions[pIdx] = false;
     }
     if (playerIdxes.length == 2) {
         onRestart();
