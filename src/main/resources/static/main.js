@@ -28,10 +28,10 @@ let stop = false;
 let playerCollisions = {}; // playerIdx=>true/false
 let playerPoses = {}; // playerIdx=>[x,y]
 let playerScores = {}; // playerIdx=>score
-const playerW = 20, playerH = 20, playerSpeed = 6, clickOffset = -46;
+const playerCount = 1, playerW = 20, playerH = 20, playerSpeed = 8, clickOffset = -46;
 let playerX = 100, playerY = 300, playerXOffset = 100;
 
-const blocksSpeed = 4, blockInitOffsetX = 300, blockWidth = 80, blankWidth = 120;
+const blocksSpeed = 8, blockInitOffsetX = 300, blockWidth = 80, blankWidth = 120;
 let blocksOffsetX = 0;
 let blocks = null;
 
@@ -39,6 +39,13 @@ let blocks = null;
 const PlayerOp = { Ready: '0', Start: '1', Click: '2', End: '3' };
 let startPanel = new StartPanel(ctxPanel, canvasPanel.width, canvasPanel.height);
 
+// let count = 10;
+// window.requestAnimationFrame(test);
+// function test(t) {
+//     console.log(t, arguments);
+//     if (--count)
+//         window.requestAnimationFrame(test);
+// }
 
 function panelTouchHandler(e) {
     console.log("panelTouchHandler");
@@ -209,7 +216,7 @@ function onUpdateRoomData() {
         playerScores[pIdx] = 0;
         playerCollisions[pIdx] = false;
     }
-    if (playerIdxes.length == 2) {
+    if (playerIdxes.length == playerCount) {
         onRestart();
     }
     console.log(playerPoses);
@@ -228,7 +235,9 @@ function handleMsg(msg) {
         }
         onUpdateRoomData();
     } else if (type == 'f') { // frame data
+        // TODO 发给服务器的上行数据，不是一操作就发送，而是按照一个固定的频率累积发送
         // TODO 将消息放入队列，按一定频率更新显示（平滑网络延迟）
+        // TODO 逻辑帧率10，显示帧率60
         let msgArr = msg.split(';');
         frameIdx = Number(msgArr[0].substring(1));
         frameData[frameIdx] = {};
@@ -253,7 +262,7 @@ connectWebSocket();
 
 function connectWebSocket() { //建立WebSocket连接
     console.log("start ws...");
-    websocket = new WebSocket("ws://127.0.0.1:80/wsdemo"); //建立webSocket连接
+    websocket = new WebSocket("ws://localhost:80/wsdemo"); //建立webSocket连接
 
     websocket.onopen = function () { //打开webSokcet连接时，回调该函数
         console.log("on open");
@@ -273,13 +282,11 @@ function connectWebSocket() { //建立WebSocket连接
     }
 }
 
-//发送消息
-function send(msg) {
+function send(msg) { //发送消息
     websocket.send(msg);
 }
 
-//关闭连接
-function closeWebSocket() {
+function closeWebSocket() { //关闭连接
     if (websocket != null) {
         websocket.close();
     }

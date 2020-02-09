@@ -7,7 +7,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 public class Room {
-	public static final int PLAYERS = 2;
+	public static final int PLAYERS = 1;
 
 	public static enum PlayerState { // Ready->Start->End->Ready
 		Ready(0), Start(1), End(3);

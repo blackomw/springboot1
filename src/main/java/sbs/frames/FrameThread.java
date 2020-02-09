@@ -6,7 +6,7 @@ import sbs.Main;
 
 public class FrameThread extends Thread {
 	public static final FrameThread Instance = new FrameThread();
-	public static final long TICK_TIME = 50;
+	public static final long TICK_TIME = 100;
 	private ConcurrentLinkedQueue<PlayerMsg> msgQueue = new ConcurrentLinkedQueue<>();
 	private long curTime;
 	private long lastTickTime;

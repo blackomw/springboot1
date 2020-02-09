@@ -1,7 +1,7 @@
 
 // 第一个玩家新建房间后，显示匹配中
 // 第二个玩家进入已有房间时，显示匹配成功；同时第一个玩家也显示匹配成功
-// 显示匹配成功后，进入5秒倒计时
+// 显示匹配成功后，进入3秒倒计时
 // 倒计时结束，开始游戏
 // 游戏中任意一方死亡游戏结束，重新进入匹配成功5秒倒计时阶段
 // 5秒倒计时阶段可选择更换房间
@@ -35,7 +35,7 @@ class StartPanel {
             clearInterval(this._matchingRet);
         }
 
-        let delay = 5;
+        let delay = 3;
         this._drawMatched(delay);
         let di = setInterval(() => {
             --delay;
@@ -87,12 +87,15 @@ class StartPanel {
     }
 
     drawPlaying(scores) {
-        this.ctxPanel.clearRect(0, 0, this.width, this.height);
-
         let score0 = 0, score1 = 0;
-        if (scores.length == 2) {
+        if (scores.length == 1) {
+            score0 = scores[0];
+        }
+        else if (scores.length == 2) {
             score0 = scores[0], score1 = scores[1];
         }
+        this.ctxPanel.clearRect(0, 0, this.width, this.height);
+
         this.ctxPanel.fillStyle = "rgba(255,0,0,1)";
         this.ctxPanel.beginPath();
         this.ctxPanel.rect(5, 5, 20, 20);
